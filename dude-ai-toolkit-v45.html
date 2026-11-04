@@ -1099,8 +1099,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       </div></div>
     </section>
 
-    <!-- ================= HALAMAN MUSIK BARU ================= -->
-            <section class="page hud-page" id="page-music" data-page="music">
+    <section class="page hud-page" id="page-music" data-page="music">
       <div class="monitor-scroll" style="padding-bottom: 110px;">
 
         <div class="hud-card mp-card" id="musicPlayerCard" style="display:none;">
@@ -1169,7 +1168,7 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
       </div>
     </section>
 
-            <section class="page hud-page" id="page-ig" data-page="ig"><div class="ed-wrap">
+    <section class="page hud-page" id="page-ig" data-page="ig"><div class="ed-wrap">
       <h3 class="ed-h">Unduh Video Instagram</h3>
       <div class="ed-note">Pakai untuk konten milikmu atau yang kamu punya izinnya; hormati hak cipta. Instagram tidak punya API publik, jadi app butuh alamat API pengunduh berformat Cobalt (bisa self-host atau instance milikmu). Hanya konten publik yang bisa diunduh.</div>
       <input id="igEp" placeholder="Alamat API (https://…)" autocapitalize="off" spellcheck="false"><input id="igKey" type="password" placeholder="API key (opsional)" autocomplete="off">
@@ -1229,7 +1228,6 @@ input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;bac
 
               </div>
             </section>
-    <!-- ================= AKHIR HALAMAN MUSIK ================= -->
 
   </div>
 </div>
@@ -1473,7 +1471,6 @@ async function hashPin(pin,salt){
   }
   return Array.from(d).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
 }
-/* hash lama (v17–v39) yang dipakai kalau crypto.subtle tidak tersedia; dipertahankan supaya PIN lama tetap bisa dibuka */
 function hashPinLegacy(pin,salt){
   var h=5381, s=salt+':'+pin;
   for(var j=0;j<s.length;j++) h=((h<<5)+h+s.charCodeAt(j))|0;
@@ -1548,7 +1545,7 @@ async function padPress(x){
     if(lockState.h && lockState.h.length < 64) ok = (hashPinLegacy(pin, lockState.s) === lockState.h);
     else ok = ((await hashPin(pin, lockState.s)) === lockState.h);
   }catch(e){ ok = false; }
-  if(ok && lockState.h && lockState.h.length < 64){ try{ lockState.s = makeSalt(); lockState.h = await hashPin(pin, lockState.s); saveLock(); }catch(e){} }   /* naikkan hash lama ke SHA-256 setelah PIN benar */
+  if(ok && lockState.h && lockState.h.length < 64){ try{ lockState.s = makeSalt(); lockState.h = await hashPin(pin, lockState.s); saveLock(); }catch(e){} }
   lkBusy = false;
   if(ok){
     lkFails=0; lkBlockUntil=0; lkTier=0; lkSaveFails(); m.textContent='Terbuka'; passed=true; padBuf=''; enterApp();
@@ -2309,7 +2306,12 @@ async function callVisionGemini(baseUrl, apiKey, model, messages, imgData, imgMi
 }
 async function callOpenAICompat(baseUrl, apiKey, model, messages, onChunk, signal){
   var url = baseUrl.replace(/\/$/,'') + '/chat/completions';
-  var headers = {'Content-Type':'application/json', 'Authorization':'Bearer '+apiKey};
+  var headers = {
+    'Content-Type':'application/json', 
+    'Authorization':'Bearer '+apiKey,
+    'HTTP-Referer': window.location.origin || 'https://oner5449.github.io/ai-dud/',
+    'X-Title': 'DUDE AI Toolkit'
+  };
   var body = {model:model, messages:messages, temperature:cfg.temperature, stream:true, stream_options:{include_usage:true}};
   var res = await fetchWithRetry(url, {method:'POST', headers:headers, body:JSON.stringify(body), signal:signal});
   var reader = res.body.getReader(), dec = new TextDecoder(), buf = '', full = '';
@@ -2337,7 +2339,12 @@ async function callOpenAICompat(baseUrl, apiKey, model, messages, onChunk, signa
 }
 async function callVisionOpenAI(baseUrl, apiKey, model, messages, imgUrl, onChunk, signal){
   var url = baseUrl.replace(/\/$/,'') + '/chat/completions';
-  var headers = {'Content-Type':'application/json', 'Authorization':'Bearer '+apiKey};
+  var headers = {
+    'Content-Type':'application/json', 
+    'Authorization':'Bearer '+apiKey,
+    'HTTP-Referer': window.location.origin || 'https://oner5449.github.io/ai-dud/',
+    'X-Title': 'DUDE AI Toolkit'
+  };
   var out = [];
   for(var i=0;i<messages.length;i++){
     var m = messages[i];
@@ -4082,7 +4089,11 @@ function initApp(){
           try {
             var url = (cfg.baseUrl||p.baseUrl)+'/models', hd = {};
             if(p.type === 'gemini'){ if(cfg.apiKey.indexOf('AQ.') === 0) hd['x-goog-api-key'] = cfg.apiKey; else url += '?key='+encodeURIComponent(cfg.apiKey); }
-            else hd.Authorization = 'Bearer '+cfg.apiKey;
+            else {
+              hd.Authorization = 'Bearer '+cfg.apiKey;
+              hd['HTTP-Referer'] = window.location.origin || 'https://oner5449.github.io/ai-dud/';
+              hd['X-Title'] = 'DUDE AI Toolkit';
+            }
             var r = await T(url, 8000, {headers:hd});
             R(r.ok ? 'ok' : 'err', 'AI '+p.name+': '+(r.ok?'key valid':'HTTP '+r.status));
           } catch(e){ R('err', 'AI '+p.name+': '+E(e)); }
@@ -4355,7 +4366,11 @@ function initApp(){
         url += '?pageSize=200';
         if(cfg.apiKey.indexOf('AQ.') === 0) hd['x-goog-api-key'] = cfg.apiKey;
         else url += '&key='+encodeURIComponent(cfg.apiKey);
-      } else hd.Authorization = 'Bearer '+cfg.apiKey;
+      } else {
+        hd.Authorization = 'Bearer '+cfg.apiKey;
+        hd['HTTP-Referer'] = window.location.origin || 'https://oner5449.github.io/ai-dud/';
+        hd['X-Title'] = 'DUDE AI Toolkit';
+      }
       var res = await fetch(url, {headers:hd});
       if(!res.ok) throw new Error('HTTP '+res.status);
       var j = await res.json();
@@ -4526,8 +4541,7 @@ function initApp(){
 })();
 
 /* ============================================================
-   BAGIAN 31: DUDE BEATS v6 — pemutar "now playing", favorit, antrian, riwayat,
-   timer tidur, mini-player, progress & seek, putar acak
+   BAGIAN 31: DUDE BEATS v6
    ============================================================ */
 var MUS = {res:[], seen:{}, src:[], i:-1, key:'', aud:null, busy:false, mode:'song', view:'song', q:'', more:null, tok:0, auto:true, scope:'all', played:{}, cur:null, autoBusy:false, chain:false, endT:null, endedAt:0, playing:false, t:0, dur:0, seeking:false, back:[], sleepAt:0, sleepIv:null, last:null};
 MUS.bg = true; MUS.useAudio = false; MUS.fb = false; MUS.stok = 0; MUS.resumeAt = 0; MUS.nxt = null; MUS.nxtBusy = false; MUS.wantPlay = false; MUS.lastProg = 0; MUS.recovering = false; MUS.retry = 0; MUS.autoAt = 0; MUS.radio = [];
@@ -4551,7 +4565,6 @@ function musRace(fns){
   return new Promise(function(res,rej){ var n = fns.length, errs = []; if(!n) return rej(new Error('tidak ada server'));
     fns.forEach(function(f){ f().then(res).catch(function(e){ errs.push(e.message); if(--n === 0) rej(new Error(errs[0] || 'semua gagal')); }); }); });
 }
-/* daftar server Piped & Invidious ditemukan otomatis (disimpan 24 jam) */
 async function musInstances(){
   var c = null; try { c = JSON.parse(safeGetItem('dude-music-inst-v32') || 'null'); } catch(e){}
   if(c && Date.now() - c.t < 86400000) return c;
@@ -4688,8 +4701,6 @@ function musLite(x){ return {k:x.k, id:x.id, t:x.t, a:x.a, th:x.th, d:x.d}; }
 function musArt(x){ return x.k === 'yt' ? musThumb(x.id) : (x.th || ''); }
 function musIsFav(x){ var k = musKey(x); return MUSL.fav.some(function(f){ return musKey(f) === k; }); }
 function musIsSearch(v){ return ['song','video','list','indie'].indexOf(v) >= 0; }
-
-/* ----- tampilan daftar ----- */
 function musRender(){
   var box = $m('musicSearchResult'), src = $m('musicSource'), lab = {fav:'Favorit', hist:'Riwayat', queue:'Antrian'}[MUS.view];
   src.textContent = lab ? MUS.res.length + ' lagu · ' + lab : MUS.res.length + ' hasil · Sumber: ' + (MUS.src.join(' + ') || '—');
@@ -4720,8 +4731,6 @@ function musView(m){
   MUS.view = m; musChips(); MUS.more = null; MUS.seen = {}; MUS.src = [];
   MUS.res = (m === 'fav' ? MUSL.fav : m === 'hist' ? MUSL.hist : MUSL.queue).slice(); musRender();
 }
-
-/* ----- favorit & antrian ----- */
 function musFavToggle(x){
   if(!x) return; var k = musKey(x), n = -1; MUSL.fav.forEach(function(f,j){ if(musKey(f) === k) n = j; });
   if(n >= 0){ MUSL.fav.splice(n,1); showToast('Dihapus dari favorit', 'ok'); } else { MUSL.fav.unshift(musLite(x)); showToast('Ditambah ke favorit ❤', 'ok'); }
@@ -4731,8 +4740,6 @@ function musFav(i){ musFavToggle(MUS.res[i]); }
 function musFavCur(){ musFavToggle(MUS.cur); }
 function musQueue(i){ var x = MUS.res[i]; if(!x || x.k === 'ytl') return showToast('Playlist tidak bisa masuk antrian', 'warn'); MUSL.queue.push(musLite(x)); musReplan(); showToast('Masuk antrian (' + MUSL.queue.length + ')', 'ok'); if(MUS.view === 'queue') musView('queue'); musUI(); }
 function musQueueDel(i){ MUSL.queue.splice(i,1); musReplan(); musView('queue'); musUI(); }
-
-/* ----- pemutar ----- */
 function musListen(){
   var fr = $m('musicIframe');
   [0,500,1500].forEach(function(t){ setTimeout(function(){ try { fr.contentWindow.postMessage(JSON.stringify({event:'listening', id:1, channel:'widget'}), 'https://www.youtube-nocookie.com'); } catch(e){} }, t); });
@@ -4747,7 +4754,6 @@ function musProg(){
   if(MUS.seeking) return; var d = MUS.dur || 0, s = $m('mpSeek');
   s.value = d > 0 ? Math.round(Math.min(1, MUS.t / d) * 1000) : 0; $m('mpCur').textContent = musDur(MUS.t) || '0:00'; $m('mpDur').textContent = musDur(d) || '0:00';
 }
-/* ----- bubble musik melayang: bisa digeser, menempel ke tepi, tap untuk kontrol ----- */
 var MINI = {x:0, y:0, side:'R', drag:false, moved:false, sx:0, sy:0, ox:0, oy:0, open:false, placed:false};
 try { var _mp = JSON.parse(safeGetItem('dude-music-pos-v36') || 'null'); if(_mp){ MINI.side = _mp.side === 'L' ? 'L' : 'R'; if(typeof _mp.y === 'number') MINI.y = _mp.y; else MINI.y = null; } else MINI.y = null; } catch(e){ MINI.y = null; }
 function miniBounds(){ var W = window.innerWidth, H = window.innerHeight; return {minX:8, maxX:W - 56 - 8, minY:130, maxY:H - 56 - 12}; }
@@ -4798,7 +4804,6 @@ function musUI(){
   $m('miniArt').src = art || ''; $m('miniTitle').textContent = x.t || ''; $m('miniArtist').textContent = x.a || ''; $m('miniBubble').classList.toggle('playing', MUS.playing); $m('miniSt').textContent = MUS.playing ? '⏸' : '▶';
   musMiniPos();
 }
-/* ----- Mode latar: audio lewat <audio> supaya tetap main saat layar mati / pindah aplikasi ----- */
 function musRank(s){ var m = /mp4|m4a|aac/i.test((s.mimeType || '') + (s.format || '')); return (m ? 0 : 1e9) + Math.abs((+s.bitrate || 0) - 128000); }
 async function musStreamPiped(base,id){
   var j = await musGet(base + '/streams/' + encodeURIComponent(id), 9000);
@@ -4867,8 +4872,6 @@ function musSession(x){
 function musPlay(i){ if(!MUS.res[i]) return; MUS.i = i; musOpen(MUS.res[i]); }
 function musNext(){ if(!MUS.res.length) return; MUS.i = (MUS.i + 1) % MUS.res.length; musOpen(MUS.res[MUS.i]); }
 function musPrev(){ var p = MUS.back.pop(); if(p){ MUS.i = -1; musOpen(p, false, true); } else if(MUS.res.length){ MUS.i = (MUS.i - 1 + MUS.res.length) % MUS.res.length; musOpen(MUS.res[MUS.i]); } }
-
-/* ----- putar acak otomatis & antrian ----- */
 function musPickUnplayed(){
   if(MUS.scope === 'fav' && MUSL.fav.length){
     var f = MUSL.fav.filter(function(x){ return (x.k === 'yt' || x.k === 'au') && !MUS.played[musKey(x)]; });
@@ -4879,7 +4882,6 @@ function musPickUnplayed(){
   var c = []; MUS.res.forEach(function(x,i){ if((x.k === 'yt' || x.k === 'au') && !MUS.played[musKey(x)]) c.push(i); });
   if(!c.length) return null; var i2 = c[Math.floor(Math.random() * c.length)]; return {i:i2, x:MUS.res[i2]};
 }
-/* ----- rantai putar tahan-latar: siapkan lagu berikutnya SEBELUM lagu sekarang habis ----- */
 var MUS_STALL_MS = 20000, MUS_WATCH_MS = 4000;
 function musPickFrom(arr){ var c = (arr || []).filter(function(x){ return (x.k === 'yt' || x.k === 'au') && !MUS.played[musKey(x)]; }); return c.length ? c[Math.floor(Math.random() * c.length)] : null; }
 async function musChooseNext(force){
@@ -4909,7 +4911,7 @@ async function musPlanNext(){
       if(n.x.k === 'yt' && MUS.bg){
         pre = await musStream(n.x.id).catch(function(){ return null; });
         if(cur !== MUS.cur) return;
-        if(!pre){ MUS.played[musKey(n.x)] = 1; if(n.q){ MUSL.queue.shift(); } continue; }   /* stream mati: buang sekarang, pilih lagu lain sebelum lagu ini habis */
+        if(!pre){ MUS.played[musKey(n.x)] = 1; if(n.q){ MUSL.queue.shift(); } continue; }
       }
       MUS.nxt = {x:n.x, q:!!n.q, i:n.i, pre:pre}; return;
     }
@@ -4925,14 +4927,13 @@ async function musAutoNext(force){
 }
 function musAdvance(manual){
   var n = MUS.nxt;
-  if(n && n.x && (n.pre || n.x.k === 'au')){   /* jalur cepat: URL stream sudah siap, ganti lagu seketika (tanpa jeda jaringan) */
+  if(n && n.x && (n.pre || n.x.k === 'au')){
     MUS.nxt = null; if(n.q){ var qi = -1; MUSL.queue.forEach(function(q,j){ if(qi < 0 && musKey(q) === musKey(n.x)) qi = j; }); if(qi >= 0) MUSL.queue.splice(qi,1); }
     MUS.i = -1; MUS.res.forEach(function(r,j){ if(musKey(r) === musKey(n.x)) MUS.i = j; }); musOpen(n.x, true, false, n.pre); if(MUS.view === 'queue') musView('queue'); return;
   }
   if(MUSL.queue.length){ var q = MUSL.queue.shift(); MUS.i = -1; MUS.nxt = null; musOpen(q, true); if(MUS.view === 'queue') musView('queue'); return; }
   if(MUS.auto) musAutoNext(true); else if(manual || MUS.useAudio) musNext();
 }
-/* ----- pemulihan: lagu macet / stream gagal tidak boleh mematikan rantai ----- */
 function musStreamFail(x,tok){
   if(MUS.retry < 2){
     MUS.retry++;
@@ -4961,8 +4962,6 @@ function musToggleAuto(){
   musUI(); showToast(MUS.auto ? 'Putar acak otomatis aktif' : 'Putar acak otomatis mati', 'ok');
 }
 function musScope(){ MUS.scope = $m('mpScope').value; musLibSave(); musReplan(); showToast(MUS.scope === 'fav' ? 'Acak hanya dari Favorit' : 'Acak dari semua lagu', 'ok'); }
-
-/* ----- timer tidur ----- */
 function musStopAll(){ MUS.wantPlay = false; try { musCmd('pauseVideo'); $m('musicAudio').pause(); } catch(e){} MUS.playing = false; musUI(); }
 function musSleep(){
   var m = +$m('mpSleep').value; clearInterval(MUS.sleepIv); MUS.sleepAt = 0; $m('mpSleepLeft').textContent = ''; if(!m) return;
@@ -5020,7 +5019,7 @@ document.addEventListener('DOMContentLoaded', function(){
   setInterval(musWatch, MUS_WATCH_MS); document.addEventListener('visibilitychange', musWatch); window.addEventListener('pageshow', musWatch); document.addEventListener('resume', musWatch);
 });
 /* ============================================================
-   BAGIAN 32: TIKTOK DOWNLOADER — ambil info lewat beberapa penyedia, unduh dengan progress nyata
+   BAGIAN 32: TIKTOK DOWNLOADER
    ============================================================ */
 var TT = {cur:null, cfg:{q:'hd', auto:false}, hist:[], busy:false, ctl:null, cancelled:false};
 try { var _tt = JSON.parse(safeGetItem('dude-tiktok-v37') || 'null'); if(_tt){ if(_tt.cfg) TT.cfg = Object.assign(TT.cfg, _tt.cfg); if(Array.isArray(_tt.hist)) TT.hist = _tt.hist; } } catch(e){}
@@ -5112,7 +5111,6 @@ function ttRender(){
     (I.images && I.images.length ? '<div class="tt-imgs">' + I.images.map(function(u,i){ return '<img src="' + ttEsc(u) + '" alt="" referrerpolicy="no-referrer" onclick="ttDownloadImage(' + i + ')">'; }).join('') + '</div><div class="tt-note">Tap sebuah foto untuk mengunduh satu foto saja.</div>' : '');
   box.style.display = 'block'; box.scrollIntoView({behavior:'smooth', block:'start'});
 }
-/* ----- unduh berkas dengan progress ----- */
 async function ttBlob(url,t,onProg){
   TT.ctl = new AbortController(); var tm = setTimeout(function(){ TT.ctl.abort(); }, 180000);
   try {
@@ -5172,7 +5170,6 @@ async function ttDownloadImages(){
   catch(e){} finally { ttProgHide(); }
   showToast(ok + ' foto terunduh', ok ? 'ok' : 'warn'); if(ok) ttHistAdd(I, TT.cur.url);
 }
-/* ----- unduh banyak link ----- */
 async function ttBatch(){
   var urls = ttExtractAll($t('ttBatchIn').value).slice(0, 20); if(!urls.length) return showToast('Tidak ada link TikTok di kolom', 'warn');
   if(TT.busy) return; TT.busy = true; TT.cancelled = false;
@@ -5194,7 +5191,6 @@ async function ttBatch(){
   } finally { TT.busy = false; ttProgHide(); }
   showToast('Selesai: ' + ok + ' dari ' + urls.length + ' berhasil', ok ? 'ok' : 'warn');
 }
-/* ----- riwayat ----- */
 function ttHistAdd(I,u){
   TT.hist = [{id:I.id, t:I.title, a:I.author, c:I.cover, u:u, ts:Date.now()}].concat(TT.hist.filter(function(h){ return h.u !== u; })).slice(0, 30); ttPersist(); ttHistRender();
 }
@@ -5210,7 +5206,7 @@ document.addEventListener('DOMContentLoaded', function(){
   $t('ttInput').addEventListener('keypress', function(e){ if(e.key === 'Enter') ttResolve(); });
 });
 
-/* ===== INSTAGRAM downloader (API format Cobalt) — v44: link dari teks, pesan error jelas, progress, unduh semua, tes API ===== */
+/* ===== INSTAGRAM downloader (API format Cobalt) ===== */
 var IG = {items:[], cfg:{}, busy:false};
 var IG_RE = /https?:\/\/(?:www\.|m\.)?instagram\.com\/(?:(?:[A-Za-z0-9._]+\/)?(?:p|reel|reels|tv)\/[A-Za-z0-9_-]+|share\/(?:(?:p|reel|r)\/)?[A-Za-z0-9_-]+|stories\/[A-Za-z0-9._]+\/\d+)/i;
 var IG_ERR = [[/private|login/i,'Postingan privat atau butuh login. Hanya konten publik yang bisa diunduh.'],[/jwt|auth|unauthori|forbidden|api.?key/i,'Server meminta API key yang valid. Isi kolom API key.'],[/rate|limit|too.?many/i,'Server membatasi permintaan. Tunggu sebentar lalu coba lagi.'],[/empty|not.?found|unavailable|deleted|no.?media/i,'Postingan tidak ditemukan atau sudah dihapus.'],[/invalid|unsupported|link/i,'Link tidak didukung oleh server ini.'],[/fetch|service|critical|timeout|api/i,'Server gagal mengambil data dari Instagram. Coba lagi nanti atau pakai server lain.']];
